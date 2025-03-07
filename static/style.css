@@ -1,44 +1,50 @@
-/* style.css - Dark Theme for Chat App */
+/* style.css - Dark Theme, Responsive, with Exit Button */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 body {
     font-family: 'Arial', sans-serif;
-    margin: 0;
-    padding: 0;
     background: #121212;
     color: #E0E0E0;
     display: flex;
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
+    padding: 10px;
 }
 
+/* Header */
 header {
     background: #1E1E1E;
     color: #BB86FC;
-    padding: 20px;
+    padding: 15px;
     text-align: center;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 h1 {
     margin: 0;
-    font-size: 2em;
+    font-size: 1.8em;
     letter-spacing: 1px;
 }
 
+/* Chat Container */
 .container {
     flex: 1;
-    padding: 20px;
-    max-width: 1000px;
-    margin: auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
+    padding: 10px;
 }
 
+/* Chat Box */
 #chat-box {
     flex: 1;
-    padding: 15px;
+    padding: 10px;
     border: 2px solid #BB86FC;
     border-radius: 10px;
     background: #1E1E1E;
@@ -47,6 +53,7 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    scroll-behavior: smooth;
 }
 
 /* Message Styles */
@@ -55,7 +62,8 @@ h1 {
     flex-direction: column;
     padding: 10px;
     border-radius: 10px;
-    max-width: 75%;
+    max-width: 85%;
+    word-wrap: break-word;
 }
 
 .message.self {
@@ -84,9 +92,9 @@ h1 {
     margin-top: 5px;
 }
 
-/* Online Users Section */
+/* Online Users */
 #users-online {
-    padding: 15px;
+    padding: 10px;
     border: 2px solid #03DAC6;
     border-radius: 10px;
     background: #1E1E1E;
@@ -94,14 +102,11 @@ h1 {
 }
 
 #users-online h3 {
-    margin: 0 0 10px 0;
+    margin-bottom: 10px;
     color: #03DAC6;
 }
 
 #user-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -115,11 +120,12 @@ h1 {
     font-size: 0.9em;
 }
 
-/* Forms */
+/* Input and Buttons */
 form {
     display: flex;
     gap: 10px;
     justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 input[type="text"] {
@@ -155,4 +161,45 @@ footer {
     color: #BB86FC;
     font-size: 0.9em;
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Exit Button */
+#exit-btn {
+    padding: 12px 20px;
+    background: #CF6679;
+    color: #121212;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#exit-btn:hover {
+    background: #FF8C9D;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.4em;
+    }
+
+    .message {
+        max-width: 95%;
+    }
+
+    input[type="text"] {
+        font-size: 0.9em;
+        padding: 10px;
+    }
+
+    button, #exit-btn {
+        padding: 10px 15px;
+        font-size: 0.9em;
+    }
+
+    footer {
+        font-size: 0.8em;
+    }
 }
