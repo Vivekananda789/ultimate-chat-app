@@ -11,6 +11,7 @@
         #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
         input, button { padding: 10px; margin: 5px; }
     </style>
+     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
@@ -67,6 +68,9 @@
         document.getElementById('messages').appendChild(msgDiv);
     });
 </script>
+<footer>
+    <p>Created by Vivekananda</p>
+</footer>
 
 </body>
 </html>
