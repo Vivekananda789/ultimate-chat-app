@@ -1,1 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Chat App</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="chat-container">
+        <h1>Ultimate Chat App 🚀</h1>
+        <div id="chat-box"></div>
+        <input id="message-input" type="text" placeholder="Type a message...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
 
+    <script>
+        const socket = io();
+
+        socket.on('message', (msg) => {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<p>${msg}</p>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value;
+            socket.send(message);
+            messageInput.value = '';
+        }
+    </script>
+</body>
+</html>
