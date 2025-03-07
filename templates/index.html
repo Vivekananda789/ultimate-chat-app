@@ -3,33 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Chat App</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Chat App</title>
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #chat { display: none; }
+        #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
+        input, button { padding: 10px; margin: 5px; }
+    </style>
 </head>
 <body>
-    <div class="chat-container">
-        <h1>Ultimate Chat App 🚀</h1>
-        <div id="chat-box"></div>
-        <input id="message-input" type="text" placeholder="Type a message...">
-        <button onclick="sendMessage()">Send</button>
-    </div>
 
-    <script>
-        const socket = io();
+<h2>Welcome to the Chat App</h2>
 
-        socket.on('message', (msg) => {
-            const chatBox = document.getElementById('chat-box');
-            chatBox.innerHTML += `<p>${msg}</p>`;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        });
+<div id="joinScreen">
+    <input id="username" type="text" placeholder="Enter your name">
+    <input id="room" type="text" placeholder="Enter room (optional)">
+    <button onclick="joinChat()">Join Chat</button>
+</div>
 
-        function sendMessage() {
-            const messageInput = document.getElementById('message-input');
-            const message = messageInput.value;
-            socket.send(message);
-            messageInput.value = '';
+<div id="chat">
+    <h3>Room: <span id="roomName"></span></h3>
+    <div id="messages"></div>
+    <input id="message" type="text" placeholder="Type your message">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="leaveChat()">Leave Chat</button>
+</div>
+
+<script>
+    const socket = io();
+    let room = '';
+    let username = '';
+
+    function joinChat() {
+        username = document.getElementById('username').value;
+        room = document.getElementById('room').value || 'general';
+        
+        if (username) {
+            socket.emit('join', { username, room });
+            document.getElementById('joinScreen').style.display = 'none';
+            document.getElementById('chat').style.display = 'block';
+            document.getElementById('roomName').innerText = room;
         }
-    </script>
+    }
+
+    function sendMessage() {
+        const message = document.getElementById('message').value;
+        if (message) {
+            socket.emit('message', { username, msg: message, room });
+            document.getElementById('message').value = '';
+        }
+    }
+
+    function leaveChat() {
+        socket.emit('leave', { username, room });
+        document.getElementById('joinScreen').style.display = 'block';
+        document.getElementById('chat').style.display = 'none';
+    }
+
+    socket.on('message', (data) => {
+        const msgDiv = document.createElement('div');
+        msgDiv.innerHTML = `<strong>${data.username || 'Server'}:</strong> ${data.msg} <small>${data.timestamp}</small>`;
+        document.getElementById('messages').appendChild(msgDiv);
+    });
+</script>
+
 </body>
 </html>
