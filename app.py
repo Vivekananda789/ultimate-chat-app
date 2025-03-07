@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for
-from flask_socketio import SocketIO, send, join_room, leave_room
-from datetime import datetime
+import os
+from flask import Flask, render_template, request
+from flask_socketio import SocketIO, join_room, leave_room
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-users_online = set()  # Store unique online users
+# Track online users
+online_users = set()
 
 @app.route('/')
 def index():
@@ -15,27 +16,32 @@ def index():
 def handle_join(data):
     username = data['username']
     room = data.get('room', 'general')
-    join_room(room)
-    users_online.add(username)
 
-    socketio.emit('user_joined', {
-        'username': username,
-        'timestamp': datetime.now().strftime('%H:%M:%S'),
-        'online_users': list(users_online)
-    }, room=room)
+    join_room(room)
+    online_users.add(username)
+
+    # Notify room of new user
+    socketio.emit('user_joined', {'username': username, 'online_users': list(online_users)}, room=room)
+    socketio.emit('update_user_count', {'count': len(online_users)})
+
+@socketio.on('leave')
+def handle_leave(data):
+    username = data['username']
+    room = data.get('room', 'general')
+
+    leave_room(room)
+    if username in online_users:
+        online_users.remove(username)
+
+    # Notify room of user leaving
+    socketio.emit('user_left', {'username': username, 'online_users': list(online_users)}, room=room)
+    socketio.emit('update_user_count', {'count': len(online_users)})
 
 @socketio.on('message')
-def handle_message(msg):
-    send(msg, broadcast=True)
-
-@socketio.on('exit')
-def handle_exit(data):
-    username = data['username']
-    users_online.discard(username)
-    socketio.emit('user_left', {
-        'username': username,
-        'online_users': list(users_online)
-    })
+def handle_message(data):
+    room = data.get('room', 'general')
+    socketio.emit('message', data, room=room)
 
 if __name__ == '__main__':
-    socketio.run(app)
+    port = int(os.environ.get('PORT', 5000))
+    socketio.run(app, host='0.0.0.0', port=port)
