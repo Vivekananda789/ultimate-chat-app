@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
+    <title>Ultimate Chat App</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -13,74 +14,71 @@
 </header>
 
 <div class="container">
-    <div id="chat-box"></div>
-
     <div id="users-online">
-        <h3>Online Users: <span id="user-count">0</span></h3>
+        <h3>Online Users: <span id="online-count">0</span></h3>
         <ul id="user-list"></ul>
     </div>
 
-    <form id="chat-form">
-        <input type="text" id="username" placeholder="Enter your name" required>
-        <input type="text" id="room" placeholder="Enter room (optional)">
-        <button type="button" onclick="joinChat()">Join Chat</button>
-    </form>
+    <div id="chat-box"></div>
 
-    <form id="message-form" style="display: none;">
-        <input type="text" id="message" placeholder="Type your message">
+    <form id="message-form">
+        <input type="text" id="message-input" placeholder="Type your message">
         <button type="submit">Send</button>
+        <button id="exit-btn" type="button">Exit Chat</button>
     </form>
 </div>
 
 <footer>
-    <p>Created by Vivekananda</p>
+    Created by Vivekananda
 </footer>
 
-<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
 <script>
     const socket = io();
-    let currentRoom = 'general';
-    let currentUser = '';
+    const username = prompt("Enter your name") || "Anonymous";
+    const room = prompt("Enter room (optional)") || "general";
 
-    function joinChat() {
-        currentUser = document.getElementById('username').value;
-        currentRoom = document.getElementById('room').value || 'general';
+    socket.emit('join', { username, room });
 
-        socket.emit('join', { username: currentUser, room: currentRoom });
+    const chatBox = document.getElementById('chat-box');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const onlineCount = document.getElementById('online-count');
+    const userList = document.getElementById('user-list');
 
-        document.getElementById('chat-form').style.display = 'none';
-        document.getElementById('message-form').style.display = 'flex';
-    }
+    socket.on('user_joined', (data) => {
+        chatBox.innerHTML += `<div class="message"><strong>Server:</strong> ${data.username} has joined the room. ${data.timestamp}</div>`;
+        updateOnlineUsers(data.online_users);
+    });
 
-    socket.on('chat_message', (msg) => {
-        const chatBox = document.getElementById('chat-box');
-        chatBox.innerHTML += `<p><b>${msg.username}:</b> ${msg.text}</p>`;
+    socket.on('user_left', (data) => {
+        chatBox.innerHTML += `<div class="message"><strong>Server:</strong> ${data.username} has left the chat.</div>`;
+        updateOnlineUsers(data.online_users);
+    });
+
+    socket.on('message', (msg) => {
+        chatBox.innerHTML += `<div class="message">${msg}</div>`;
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
-    socket.on('server_message', (msg) => {
-        const chatBox = document.getElementById('chat-box');
-        chatBox.innerHTML += `<p class="server-message"><b>Server:</b> ${msg.msg}</p>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-    });
-
-    socket.on('update_users', (data) => {
-        document.getElementById('user-count').innerText = data.count;
-        const userList = document.getElementById('user-list');
-        userList.innerHTML = '';
-        data.users.forEach(user => {
-            userList.innerHTML += `<li>${user}</li>`;
-        });
-    });
-
-    document.getElementById('message-form').addEventListener('submit', (e) => {
+    messageForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const message = document.getElementById('message').value;
-        if (message) {
-            socket.emit('message', { username: currentUser, text: message, room: currentRoom });
-            document.getElementById('message').value = '';
+        const msg = messageInput.value;
+        if (msg) {
+            socket.send(`<strong>${username}:</strong> ${msg}`);
+            messageInput.value = '';
         }
     });
+
+    document.getElementById('exit-btn').addEventListener('click', () => {
+        socket.emit('exit', { username });
+        alert("You have left the chat.");
+        window.location.reload();
+    });
+
+    function updateOnlineUsers(users) {
+        onlineCount.innerText = users.length;
+        userList.innerHTML = users.map(user => `<li>${user}</li>`).join('');
+    }
 </script>
 
 </body>
