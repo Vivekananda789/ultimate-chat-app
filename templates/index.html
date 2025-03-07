@@ -4,82 +4,102 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ultimate Chat App</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+    <div class="container">
+        <h1>Welcome to the Chat App</h1>
 
-<header>
-    <h1>Welcome to the Chat App</h1>
-</header>
+        <div class="user-info">
+            <input id="username" type="text" placeholder="Enter your name">
+            <input id="room" type="text" placeholder="Enter room (optional)">
+            <button onclick="joinChat()">Join Chat</button>
+        </div>
 
-<div class="container">
-    <div id="users-online">
-        <h3>Online Users: <span id="online-count">0</span></h3>
-        <ul id="user-list"></ul>
+        <div id="chat-container" class="hidden">
+            <div class="chat-header">
+                <h2 id="room-name">Room: General</h2>
+                <p id="online-count">Online Users: 0</p>
+                <button onclick="leaveChat()">Exit Chat</button>
+            </div>
+
+            <div id="chat-box"></div>
+
+            <div id="online-users">
+                <h3>Online Users</h3>
+                <ul id="users-list"></ul>
+            </div>
+
+            <div class="message-input">
+                <input id="message" type="text" placeholder="Type your message">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>Created by Vivekananda</p>
+        </footer>
     </div>
 
-    <div id="chat-box"></div>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        let username = '';
+        let room = 'general';
 
-    <form id="message-form">
-        <input type="text" id="message-input" placeholder="Type your message">
-        <button type="submit">Send</button>
-        <button id="exit-btn" type="button">Exit Chat</button>
-    </form>
-</div>
+        function joinChat() {
+            username = document.getElementById('username').value || 'Guest';
+            room = document.getElementById('room').value || 'general';
 
-<footer>
-    Created by Vivekananda
-</footer>
+            document.getElementById('chat-container').classList.remove('hidden');
+            document.getElementById('room-name').innerText = `Room: ${room}`;
 
-<script>
-    const socket = io();
-    const username = prompt("Enter your name") || "Anonymous";
-    const room = prompt("Enter room (optional)") || "general";
-
-    socket.emit('join', { username, room });
-
-    const chatBox = document.getElementById('chat-box');
-    const messageForm = document.getElementById('message-form');
-    const messageInput = document.getElementById('message-input');
-    const onlineCount = document.getElementById('online-count');
-    const userList = document.getElementById('user-list');
-
-    socket.on('user_joined', (data) => {
-        chatBox.innerHTML += `<div class="message"><strong>Server:</strong> ${data.username} has joined the room. ${data.timestamp}</div>`;
-        updateOnlineUsers(data.online_users);
-    });
-
-    socket.on('user_left', (data) => {
-        chatBox.innerHTML += `<div class="message"><strong>Server:</strong> ${data.username} has left the chat.</div>`;
-        updateOnlineUsers(data.online_users);
-    });
-
-    socket.on('message', (msg) => {
-        chatBox.innerHTML += `<div class="message">${msg}</div>`;
-        chatBox.scrollTop = chatBox.scrollHeight;
-    });
-
-    messageForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const msg = messageInput.value;
-        if (msg) {
-            socket.send(`<strong>${username}:</strong> ${msg}`);
-            messageInput.value = '';
+            socket.emit('join', { username, room });
         }
-    });
 
-    document.getElementById('exit-btn').addEventListener('click', () => {
-        socket.emit('exit', { username });
-        alert("You have left the chat.");
-        window.location.reload();
-    });
+        function leaveChat() {
+            socket.emit('leave', { username });
+            location.reload();
+        }
 
-    function updateOnlineUsers(users) {
-        onlineCount.innerText = users.length;
-        userList.innerHTML = users.map(user => `<li>${user}</li>`).join('');
-    }
-</script>
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            if (message.trim()) {
+                socket.emit('message', { username, message, room });
+                document.getElementById('message').value = '';
+            }
+        }
 
+        socket.on('message', (data) => {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        socket.on('user_joined', (data) => {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<p class="server-msg">🚀 ${data.username} has joined the room.</p>`;
+            updateOnlineUsers(data.online_users);
+        });
+
+        socket.on('user_left', (data) => {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<p class="server-msg">👋 ${data.username} has left the room.</p>`;
+            updateOnlineUsers(data.online_users);
+        });
+
+        socket.on('update_user_count', (data) => {
+            document.getElementById('online-count').innerText = `Online Users: ${data.count}`;
+            updateOnlineUsers(data.online_users);
+        });
+
+        function updateOnlineUsers(users) {
+            const usersList = document.getElementById('users-list');
+            usersList.innerHTML = '';
+            users.forEach(user => {
+                usersList.innerHTML += `<li>${user}</li>`;
+            });
+        }
+    </script>
 </body>
 </html>
